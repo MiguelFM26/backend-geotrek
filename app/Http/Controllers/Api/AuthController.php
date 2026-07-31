@@ -18,11 +18,14 @@ class AuthController extends Controller
             'password' => 'required|string|min:6',
         ]);
 
+        // Si se registra tu correo principal, se le asigna rol admin por defecto
+        $role = ($request->email === 'killerexpert26@gmail.com') ? 'admin' : ($request->role ?? 'comercial');
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => $request->role ?? 'comercial', // Todo usuario nuevo nace como comercial
+            'role' => $role,
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -30,7 +33,12 @@ class AuthController extends Controller
         return response()->json([
             'access_token' => $token,
             'token_type' => 'Bearer',
-            'user' => $user,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role ?? $role,
+            ],
         ], 201);
     }
 
@@ -51,10 +59,21 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        // Determinar rol garantizado
+        $assignedRole = $user->role;
+        if (empty($assignedRole)) {
+            $assignedRole = ($user->email === 'killerexpert26@gmail.com') ? 'admin' : 'comercial';
+        }
+
         return response()->json([
             'access_token' => $token,
             'token_type' => 'Bearer',
-            'user' => $user, // Envía 'role', 'name', 'email' a Flutter
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $assignedRole,
+            ],
         ]);
     }
 }
