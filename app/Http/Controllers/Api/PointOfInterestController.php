@@ -10,8 +10,20 @@ class PointOfInterestController extends Controller
 {
     public function index(Request $request)
     {
+        $query = PointOfInterest::with(['reviews', 'category', 'route']);
+
+        // Si se solicita un estado específico desde la query (?status=pendiente)
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        } 
+        // Si el panel web solicita todos los puntos (?all=true)
+        elseif (!$request->boolean('all')) {
+            // Por defecto (App Móvil): Solo devolver los atractivos APROBADOS
+            $query->whereIn('status', ['aprobado', 'Aprobado']);
+        }
+
         // Carga los POIs junto con sus relaciones y calcula el promedio de calificación
-        $pois = PointOfInterest::with(['reviews', 'category', 'route'])->get()->map(function ($poi) {
+        $pois = $query->get()->map(function ($poi) {
             $totalReviews = $poi->reviews ? $poi->reviews->count() : 0;
             $avgRating = $totalReviews > 0 ? $poi->reviews->avg('rating') : 0;
 
@@ -25,8 +37,8 @@ class PointOfInterestController extends Controller
                 'category_id' => $poi->category_id,
                 'radius_meters' => $poi->radius_meters ?? 20,
                 'status' => $poi->status ?? 'pendiente',
-                'rating' => round($avgRating, 1), // Promedio ej: 4.5
-                'reviews_count' => $totalReviews,  // Cantidad total de reseñas
+                'rating' => round($avgRating, 1),
+                'reviews_count' => $totalReviews,
                 'category' => $poi->category,
                 'route' => $poi->route,
                 'reviews' => $poi->reviews,
