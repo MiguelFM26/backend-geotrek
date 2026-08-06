@@ -20,7 +20,6 @@ class ReviewController extends Controller
         try {
             $poiId = $request->point_of_interest_id ?? $request->poi_id;
 
-            // Garantizar que exista un POI en la BD para no romper la FK
             if (!$poiId || !PointOfInterest::where('id', $poiId)->exists()) {
                 $poi = PointOfInterest::first();
                 if (!$poi) {
@@ -35,11 +34,15 @@ class ReviewController extends Controller
                 $poiId = $poi->id;
             }
 
+            // Captura la foto enviada desde Flutter (base64 o URL)
+            $image = $request->image ?? $request->photo ?? $request->photo_base64;
+
             $review = Review::create([
                 'point_of_interest_id' => $poiId,
                 'user_name' => $request->user_name ?? $request->userName ?? 'Turista GeoTrek',
                 'rating' => $request->rating ?? 5,
                 'comment' => $request->comment ?? 'Excelente lugar',
+                'image' => $image, // <-- GUARDA LA FOTO EN LA BD
                 'status' => 'Aprobado',
             ]);
 

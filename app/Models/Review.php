@@ -16,6 +16,7 @@ class Review extends Model
         'user_name',
         'rating',
         'comment',
+        'image',
         'status'
     ];
 
