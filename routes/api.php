@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\UserController;
 // Autenticación
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/google-login', [AuthController::class, 'googleLogin']);
 
 // Endpoints Públicos de Gestión Directa (App Web Admin y App Móvil)
 Route::get('/pois', [PointOfInterestController::class, 'index']);

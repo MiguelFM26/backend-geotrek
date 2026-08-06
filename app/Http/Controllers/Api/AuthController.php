@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\Api; // <-- Namespace especificado dentro de Api
+namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -75,5 +76,43 @@ class AuthController extends Controller
                 'role' => $assignedRole,
             ],
         ]);
+    }
+
+    // LOGIN CON GOOGLE
+    public function googleLogin(Request $request)
+    {
+        $email = $request->email;
+        $name = $request->name ?? 'Usuario Google';
+
+        if (!$email) {
+            return response()->json(['error' => 'No se proporcionó correo electrónico.'], 400);
+        }
+
+        $role = ($email === 'killerexpert26@gmail.com') ? 'admin' : 'comercial';
+
+        // Buscar el usuario por email o crearlo si es la primera vez que ingresa con Google
+        $user = User::firstOrCreate(
+            ['email' => $email],
+            [
+                'name' => $name,
+                'password' => Hash::make(Str::random(16)),
+                'role' => $role,
+            ]
+        );
+
+        $assignedRole = $user->role ?? $role;
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $assignedRole,
+            ],
+        ], 200);
     }
 }
